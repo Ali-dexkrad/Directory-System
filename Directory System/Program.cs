@@ -3,9 +3,9 @@ using System.IO;
 
 public class Directory_System
 {
+    //  بارگذاری درخت فایل و پوشه ها
     private static void PrintTree(string path, string indent, bool isLast)
-    {
-        
+    {   
         Console.ForegroundColor = ConsoleColor.DarkGreen;
 
         var directoryInfo = new DirectoryInfo(path);
@@ -27,9 +27,12 @@ public class Directory_System
         }
     }
 
+    //تابع اصلی
     public static void Main(string[] args)
     {
         GetMenu();
+
+        // پیدا کردن مسیر پوشه روت
         string executablePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
         string executableDirectory = System.IO.Path.GetDirectoryName(executablePath);
         string rootPath = executableDirectory + @"\Root\";
@@ -53,7 +56,7 @@ public class Directory_System
                 Console.Write("\n\n\nEnter Directory Path >");
                 string pathD;
                 pathD = Console.ReadLine();
-                string statusD = InsertDirectory(rootPath+pathD);
+                string statusD = InsertDirectory(rootPath + pathD);
                 if (statusD == "done successfully")
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGreen;
@@ -78,7 +81,7 @@ public class Directory_System
                 Console.Write("\n\n\nEnter the file path (along with the file format)>");
                 string path;
                 path = Console.ReadLine();
-                string status = InsertFile(rootPath+path);
+                string status = InsertFile(rootPath + path);
                 if (status == "done successfully")
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGreen;
@@ -122,44 +125,45 @@ public class Directory_System
 
                     goto hare;
                 }
-                
-            case "s":
+
+            case "sf":
                 Console.Clear();
                 PrintTree(rootPath, "", true);
-                Console.Write("\n\n\nEnter The File Or Directory Path>");
+                Console.Write("\n\n\nEnter The File Name>");
                 string pathS;
                 pathS = Console.ReadLine();
-                string statusS = Search(rootPath + pathS);
-                if (statusS == "Found")
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkGreen;
-                    Console.WriteLine(statusS);
-                    Console.ResetColor(); Console.ReadKey();
-                    Console.Clear(); PrintTree(rootPath, "", true);
+                string statusS = SearchFile(pathS, rootPath);
 
-                    goto hare;
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(statusS);
-                    Console.ResetColor(); Console.ReadKey();
-                    Console.Clear();
-                    PrintTree(rootPath, "", true);
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
+                Console.WriteLine(statusS);
+                Console.ResetColor(); Console.ReadKey();
+                Console.Clear(); PrintTree(rootPath, "", true);
 
-                    goto hare;
-                }
+                goto hare;
+            case "sd":
+                Console.Clear();
+                PrintTree(rootPath, "", true);
+                Console.Write("\n\n\nEnter The Directory Name>");
+                string pathSd;
+                pathSd = Console.ReadLine();
+                string statusSd = SearchDirectory(pathSd, rootPath);
+
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
+                Console.WriteLine(statusSd);
+                Console.ResetColor(); Console.ReadKey();
+                Console.Clear(); PrintTree(rootPath, "", true);
+
+                goto hare;
             default:
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("The command is invalid");
                 Console.ForegroundColor = ConsoleColor.DarkGreen;
                 Console.ReadKey();
                 goto hare;
-                break;
         }
-        Console.ReadKey();
     }
 
+    // منوی برنامه
     private static void GetMenu()
     {
         Console.Clear();
@@ -182,13 +186,18 @@ public class Directory_System
 | insd : Insert Directory           |
 | insf : Insert File                |
 | del : Delete Directory Of File    |
-| s : Search Directory Or File      |
-|___________________________________|
- ");
+| sf : Search File                  |
+| sd : Search Directory             |
+|___________________________________|");
 
 
     }
 
+    /// <summary>
+    /// افزودن پوشه جدید به محل روت
+    /// </summary>
+    /// <param name="path">مسیر پوشه</param>
+    /// <returns></returns>
     private static string InsertDirectory(string path)
     {
         string status = "";
@@ -211,6 +220,12 @@ public class Directory_System
 
         return status;
     }
+
+    /// <summary>
+    /// افزودن فایل جدید به محل روت
+    /// </summary>
+    /// <param name="path">مسیر فایل</param>
+    /// <returns></returns>
     private static string InsertFile(string path)
     {
         string status = "";
@@ -233,6 +248,12 @@ public class Directory_System
       
         return status;
     }
+
+    /// <summary>
+    /// حذف پوشه یا فایل
+    /// </summary>
+    /// <param name="path">مسیر پوشه یا فایل را میتوان داد</param>
+    /// <returns></returns>
     private static string Delete(string path)
     {
         string status = "";
@@ -259,22 +280,70 @@ public class Directory_System
         }
         return status;
     }
-    private static string Search(string path)
+
+    /// <summary>
+    /// تابع جستجوی فایل
+    /// </summary>
+    /// <param name="path">فقط نام فایل به همراه فرمت</param>
+    /// <param name="treepath">مسیر اصلی روت</param>
+    /// <returns></returns>
+    private static string SearchFile(string path, string treepath)
     {
         string status = "";
         try
         {
-            if (Directory.Exists(path))
+            string[] foundPaths = Directory.GetFiles(treepath, path, SearchOption.AllDirectories);
+            if (foundPaths.Length > 0)
             {
-                status = "Found";
-            }
-            else if (File.Exists(path))
-            {
-                status = "Found";
+                foreach (string path1 in foundPaths)
+                {
+                    status = "Found paths:" + path1;
+                }
             }
             else
             {
-                status = "The path is invalid";
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Not Found");
+                Console.ResetColor();
+            }
+        }
+        catch (Exception ex)
+        {
+            status = ex.Message;
+        }
+        return status;
+    }
+
+    /// <summary>
+    /// تابع جستجوی پوشه
+    /// </summary>
+    /// <param name="path1">فقط نام پوشه </param>
+    /// <param name="treepath">مسیر اصلی روت</param>
+    /// <returns></returns>
+    private static string SearchDirectory(string path1, string treepath)
+    {
+        string status = "";
+        try
+        {
+            string folderName = path1;
+            string path = treepath;
+
+            string[] directories = Directory.GetDirectories(path, folderName, SearchOption.AllDirectories);
+
+            if (directories.Length > 0)
+            {
+                Console.WriteLine($"Directory Path : {folderName}");
+
+                foreach (string directory in directories)
+                {
+                    Console.WriteLine(directory);
+                }
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Not Found");
+                Console.ResetColor();
             }
         }
         catch (Exception ex)
